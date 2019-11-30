@@ -1,0 +1,36 @@
+name: mixmatch
+channels:
+- pytorch
+- defaults
+- peterjc123
+dependencies:
+- scipy
+- cuda90
+- cudnn
+- numpy
+- pillow
+- ipykernel
+- ipython
+- ipython_genutils
+- ipywidgets
+- jedi
+- jinja2
+- jsonschema
+- jupyter
+- jupyter_client
+- jupyter_console
+- jupyter_core
+- matplotlib=2.2.3
+- nbformat
+- notebook
+- pandas
+- pip
+- python==3.7.5
+- tqdm
+- pytorch==1.2
+- pyyaml
+- pip:
+  - torchvision==0.4.2
+  - pandas_summary==0.0.5
+  - ipywidgets
+  - nbconvert
