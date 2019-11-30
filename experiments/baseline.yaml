@@ -1,0 +1,4 @@
+dataset:
+  name: cifar10    # cifar10 or cifar100
+model:
+  test: True
