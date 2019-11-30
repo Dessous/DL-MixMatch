@@ -1,5 +1,8 @@
 import argparse
 import yaml
+import os
+from logger import *
+from dataset import *
 
 
 class AttrDict(dict):
@@ -29,5 +32,12 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
+    if not os.path.exists('results/' + args.experiment):
+        os.mkdir('results/' + args.experiment)
+
+    logger = Logger('results/' + args.experiment + '/')
+
     with open('experiments/' + args.experiment + '.yaml') as config_file:
         config = AttrDict.from_nested_dict(yaml.safe_load(config_file))
+
+    data = get_dataset(config.dataset, logger)

@@ -1,4 +1,5 @@
 dataset:
   name: cifar10    # cifar10 or cifar100
+  val_rate: 0.2
 model:
   test: True

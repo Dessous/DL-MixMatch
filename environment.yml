@@ -30,7 +30,7 @@ dependencies:
 - pytorch==1.2
 - pyyaml
 - pip:
-  - torchvision==0.4.2
+  - torchvision==0.4.1
   - pandas_summary==0.0.5
   - ipywidgets
   - nbconvert
