@@ -1,6 +1,7 @@
 import argparse
 import yaml
 import os
+import torch
 from logger import *
 from dataset import *
 
@@ -40,4 +41,10 @@ if __name__ == '__main__':
     with open('experiments/' + args.experiment + '.yaml') as config_file:
         config = AttrDict.from_nested_dict(yaml.safe_load(config_file))
 
-    data = get_dataset(config.dataset, logger)
+    # fixing the seed
+    np.random.seed(config.random.seed)
+    torch.manual_seed(config.random.seed)
+    torch.backends.cudnn.deterministic = True
+
+    train_labeled_loader, train_unlabeled_loader, val_loader, test_loader = \
+        get_loaders(config, logger)
