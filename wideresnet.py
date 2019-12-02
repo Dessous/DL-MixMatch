@@ -32,7 +32,7 @@ class WideResNet28(nn.Module):
         DEPTH = 28
         blocks_count = (DEPTH - 4) // 6
         
-        self.conv = nn.Conv2d(blocks_count, 16, kernel_size=3,
+        self.conv = nn.Conv2d(3, 16, kernel_size=3,
                                stride=1, padding=1, bias=True)
         self.block1 = self.create_wide_block(16, 16*widen_factor, blocks_count,
                                 relu, dropout, 1)
