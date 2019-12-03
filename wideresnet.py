@@ -1,6 +1,7 @@
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
+import math
 
 class WideBlock(nn.Module):
     def __init__(self, in_size, out_size, relu, dropout=0.0, stride=1):
@@ -26,6 +27,17 @@ class WideBlock(nn.Module):
         out += self.shortcut(x)
         return out
 
+def weigths_init(modules):
+    for m in modules:
+        if isinstance(m, nn.Conv2d):
+            n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            m.weight.data.normal_(0, math.sqrt(2. / n))
+        elif isinstance(m, nn.BatchNorm2d):
+            m.weight.data.fill_(1)
+            m.bias.data.zero_()
+        elif isinstance(m, nn.Linear):
+            m.bias.data.zero_()
+
 class WideResNet28(nn.Module):
     def __init__(self, n_classes, widen_factor=1, relu=0.01, dropout=0.0):
         super(WideResNet28, self).__init__()
@@ -44,6 +56,7 @@ class WideResNet28(nn.Module):
         self.batch_norm = nn.BatchNorm2d(64*widen_factor)
         self.relu = nn.LeakyReLU(relu, inplace=True)
         self.linear = nn.Linear(64*widen_factor, n_classes)
+        weigths_init(self.modules())
         
     def create_wide_block(self, in_size, out_size, blocks_count, relu, dropout, stride):
         layers = [
@@ -53,8 +66,8 @@ class WideResNet28(nn.Module):
             layers.append(WideBlock(out_size, out_size, relu, dropout, 1))
 
         return nn.Sequential(*layers)
-        
-    def forward():
+
+    def forward(self, x):
         out = self.conv(x)
         out = self.block1(out)
         out = self.block2(out)

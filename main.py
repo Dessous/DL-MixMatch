@@ -4,6 +4,7 @@ import os
 import torch
 from logger import *
 from dataset import *
+from train_baseline import train_baseline
 
 
 class AttrDict(dict):
@@ -48,3 +49,5 @@ if __name__ == '__main__':
 
     train_labeled_loader, train_unlabeled_loader, val_loader, test_loader = \
         get_loaders(config, logger)
+    if not config.train.use_mixmatch:
+        train_baseline(train_labeled_loader, val_loader, config.train.lr, config.train.num_epoch)

@@ -2,9 +2,12 @@ random:
   seed: 42
 dataset:
   name: cifar10    # cifar10 or cifar100
-  val_rate: 0.2
-  labeled_per_class: 1000
+  val_rate: 0.1
+  labeled_per_class: 4000
 model:
   test: True
 train:
   batch_size: 32
+  use_mixmatch: False
+  lr: 0.002
+  num_epoch: 20
