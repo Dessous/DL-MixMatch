@@ -11,3 +11,11 @@ train:
   use_mixmatch: False
   lr: 0.002
   num_epoch: 20
+augmentations:
+  use: True
+  use_crop: True
+  pad_size: 4
+  use_flip: True
+  flip_prob: 0.5
+  use_noise: True
+  noise_rate: 0.15

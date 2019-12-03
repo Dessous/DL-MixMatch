@@ -25,7 +25,7 @@ def train_val_split(labels, n_labeled, n_classes, val_rate):
         split = int(len(idxs) * val_rate)
         idx_train = idxs[split:]
         idx_val.extend(idxs[:split])
-        assert n_labeled <= len(idx_train), f"{n_labeled} > {len(idx_train)})"
+        assert n_labeled <= len(idx_train), f"{n_labeled} > {len(idx_train)}"
         idx_labeled.extend(idx_train[:n_labeled])
         idx_unlabeled.extend(idx_train[n_labeled:])
     return idx_labeled, idx_unlabeled, idx_val
