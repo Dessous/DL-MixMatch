@@ -55,6 +55,6 @@ if __name__ == '__main__':
     if config.augmentations.use:
         augmentor = Augmentor(config)
     if config.train.use_mixmatch:
-        train_mixmatch(train_labeled_loader, train_unlabeled_loader, val_loader, augmentor, config)
+        train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, augmentor, config)
     else:
         train_baseline(train_labeled_loader, val_loader, augmentor, config.train.lr, config.train.num_epoch)

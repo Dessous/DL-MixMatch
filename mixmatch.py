@@ -1,6 +1,7 @@
 from augmentations import Augmentor
 import torch
 import numpy as np
+import torch.nn.functional as F
 
 
 class MixMatch:
@@ -8,10 +9,10 @@ class MixMatch:
         self.T = config.mixmatch.sharp_temperature
         self.K = config.mixmatch.n_aug
         self.mixup_alpha = config.mixmatch.mixup_alpha
-        self.lmbd_u = config.mixmatch.lmbd_u
         self.augmentor = Augmentor(config)
         self.n_classes = 10 if config.dataset.name == 'cifar10' else 100
         self.model = model
+        self.loss = MixMatchLoss(config.mixmatch.lmbd_u, config.mixmatch.lmbd_rampup_length)
 
     def guess_labels(self, unlabeled_batches):
         batch_size = unlabeled_batches[0].size(0)
@@ -26,7 +27,7 @@ class MixMatch:
             guessed_y **= 1 / self.T
         return guessed_y
 
-    def __call__(self, x_l, y, x_u):
+    def __call__(self, x_l, y, x_u, epoch):
         batch_size = x_l.size(0)
         labeled = self.augmentor(x_l)
         ohe_y_labeled = torch.zeros(batch_size, self.n_classes).scatter_(1, y.view(-1, 1), 1)
@@ -43,7 +44,7 @@ class MixMatch:
         shuffled_x = all_x[perm]
         shuffled_y = all_y[perm]
 
-        lmbd = np.random.beta(self.mixup_alpha)
+        lmbd = np.random.beta(self.mixup_alpha, self.mixup_alpha)
         lmbd = max(lmbd, 1 - lmbd)
         mixup_x = lmbd * all_x + (1 - lmbd) * shuffled_x
         mixup_y = lmbd * all_y + (1 - lmbd) * shuffled_y
@@ -51,6 +52,23 @@ class MixMatch:
         mixup_x = interleave(list(torch.split(mixup_x, batch_size)), batch_size)
         logits = [self.model(x) for x in mixup_x]
         logits = interleave(logits, batch_size)
+        logits_labeled = logits[0]
+        logits_unlabeled = torch.cat(logits[1:])
+        y_labeled = mixup_y[:batch_size]
+        y_unlabeled = mixup_y[batch_size:]
+        return self.loss(logits_labeled, logits_unlabeled, y_labeled, y_unlabeled, epoch)
+
+
+class MixMatchLoss:
+    def __init__(self, lmbd, rampup_length):
+        self.lmbd = lmbd
+        self.rampup_length = rampup_length
+
+    def __call__(self,  logits_labeled, logits_unlabeled, y_labeled, y_unlabeled, epoch):
+        unlabeled_prob = torch.softmax(logits_unlabeled, dim=1)
+        l_x = -torch.mean(torch.sum(F.log_softmax(logits_labeled, dim=1) * y_labeled, dim=1))
+        l_u = torch.mean((unlabeled_prob - y_unlabeled) ** 2)
+        return l_x + l_u * self.lmbd * rampup(epoch, self.rampup_length)
 
 
 def interleave_offsets(batch_size, n_groups):
@@ -71,3 +89,11 @@ def interleave(batches, batch_size):
         out[0][i], out[i][i] = out[i][i], out[0][i]
     out = [torch.cat(row) for row in out]
     return out
+
+
+def rampup(current, rampup_length):
+    if rampup_length == 0:
+        return 1.0
+    else:
+        current = np.clip(current / rampup_length, 0.0, 1.0)
+        return float(current)

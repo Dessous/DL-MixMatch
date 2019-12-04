@@ -19,9 +19,3 @@ augmentations:
   flip_prob: 0.5
   use_noise: True
   noise_rate: 0.15
-mixmatch:
-  sharp_temperature: 0.5
-  n_aug: 3
-  mixup_alpha: 0.75
-  lmbd_u: 75
-  lmbd_u_increase: 10
