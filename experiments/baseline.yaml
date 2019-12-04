@@ -3,7 +3,7 @@ random:
 dataset:
   name: cifar10    # cifar10 or cifar100
   val_rate: 0.1
-  labeled_per_class: 4000
+  labeled_per_class: 250
 model:
   test: True
 train:

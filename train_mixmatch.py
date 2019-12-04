@@ -12,8 +12,8 @@ def one_hot_vector(num_class, label):
     return torch.Tensor(vec)
 
 def train(train_labeled_loader, train_unlabeled_loader, model,
-          optimizer, train_criterion, epoch, augmentor,
-          lr=0.002, num_iter=1024, T=1, alpha=0.75):
+          optimizer, train_criterion, criterion, epoch, augmentor, writer,
+          num_iter=1024, T=1, alpha=0.75):
     
     model.train(True)
     dataloaders = {
@@ -22,6 +22,7 @@ def train(train_labeled_loader, train_unlabeled_loader, model,
     }
     
     mix_match_loss = MixMatchMetric()
+    mix_match_acc = MixMatchMetric()
 
     for i in range(num_iter):
         labeled, target = next(dataloaders['labeled'])
@@ -30,10 +31,10 @@ def train(train_labeled_loader, train_unlabeled_loader, model,
         unlabeled1 = augmentor(unlabeled1)
         assert not torch.all(torch.eq(unlabeled1, unlabeled2))
 
-        target = one_hot_vector(10, target)
+        target_ohe = one_hot_vector(10, target)
 
         labeled = labeled.cuda()
-        target = target.cuda(non_blocking=True)  # ???
+        target_ohe = target_ohe.cuda(non_blocking=True)  # ???
         unlabeled1 = unlabeled1.cuda()
         unlabeled2 = unlabeled2.cuda()
 
@@ -45,7 +46,7 @@ def train(train_labeled_loader, train_unlabeled_loader, model,
             u1_target = (pt / pt.sum(dim=1, keepdim=True)).detach()
 
         input_concat = torch.cat([labeled, unlabeled1, unlabeled2], dim=0)
-        target_concat = torch.cat([target, u1_target, u1_target], dim=0)
+        target_concat = torch.cat([target_ohe, u1_target, u1_target], dim=0)
 
         lambd = np.random.beta(alpha, alpha)
         lambd = max(lambd, 1 - lambd)
@@ -74,14 +75,19 @@ def train(train_labeled_loader, train_unlabeled_loader, model,
                                      mixed_target[batch_size:])
 
         mix_match_loss.update(total_loss.item(), batch_size)
+        writer.add_scalar('train_loss', mix_match_loss.value(), i + epoch * num_iter)
 
+        pred_lab = model(labeled.cuda())
+        acc = (torch.argmax(pred_lab, dim=1) == target.cuda()).float().sum() / batch_size
+        writer.add_scalar('train_acc', acc, i + epoch * num_iter)
+        
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
         
     return mix_match_loss.value()
 
-def test(loader, model, criterion):
+def test(loader, model, criterion, writer=None):
     losses = MixMatchMetric()
     accuracy = MixMatchMetric()
 
@@ -91,7 +97,7 @@ def test(loader, model, criterion):
             batch_size = batch[0].size(0)
             pred = model(batch[0].cuda())
             loss = criterion(pred, batch[1].cuda())
-            acc = (torch.argmax(pred, dim=1) == batch[1].cuda()).float().sum()
+            acc = (torch.argmax(pred, dim=1) == batch[1].cuda()).float().sum() / batch_size
             losses.update(loss.item(), batch_size)
             accuracy.update(acc, batch_size)
 
@@ -107,17 +113,12 @@ def train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, au
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.train.lr)
 
-    for epoch in range(20):
+    for epoch in range(config.train.num_epoch):
         train_loss = train(train_labeled_loader, train_unlabeled_loader, model,
-                           optimizer, train_criterion, epoch, augmentor)
-        print(train_loss)
-        writer.add_scalar('train_loss', train_loss, epoch)
+                           optimizer, train_criterion, criterion, epoch, augmentor, writer,
+                           config.train.num_iter, config.train.T, config.train.alpha)
         
-        _, train_acc = test(train_labeled_loader, model, criterion)
+        print('Avg loss at {} epoch is {}'.format(epoch, train_loss))
         test_loss, test_acc = test(test_loader, model, criterion)
-        
-        
-        writer.add_scalar('train_loss', train_loss, epoch)
         writer.add_scalar('test_loss', test_loss, epoch)
-        writer.add_scalar('train_acc', train_acc, epoch)        
         writer.add_scalar('test_acc', test_acc, epoch)

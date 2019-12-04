@@ -3,14 +3,17 @@ random:
 dataset:
   name: cifar10    # cifar10 or cifar100
   val_rate: 0.1
-  labeled_per_class: 4000
+  labeled_per_class: 250
 model:
   test: True
 train:
   batch_size: 32
   use_mixmatch: True
-  lr: 0.002
+  lr: 0.0002
   num_epoch: 50
+  num_iter: 1024
+  T: 1
+  alpha: 0.75 
   logdir: logs-mixmatch
 augmentations:
   use: True
