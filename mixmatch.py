@@ -24,13 +24,13 @@ class MixMatch:
                 output = self.model(batch)
                 guessed_y += torch.softmax(output, dim=1)
             guessed_y /= len(unlabeled_batches)
-            guessed_y **= 1 / self.T
+            guessed_y = guessed_y**(1 / self.T)
         return guessed_y
 
     def __call__(self, x_l, y, x_u, epoch):
         batch_size = x_l.size(0)
         labeled = self.augmentor(x_l)
-        ohe_y_labeled = torch.zeros(batch_size, self.n_classes).scatter_(1, y.view(-1, 1), 1)
+        ohe_y_labeled = torch.zeros(batch_size, self.n_classes).cuda().scatter_(1, y.view(-1, 1), 1)
         if x_l.is_cuda:
             ohe_y_labeled = ohe_y_labeled.cuda()
 
