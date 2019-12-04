@@ -1,0 +1,22 @@
+random:
+  seed: 42
+dataset:
+  name: cifar10    # cifar10 or cifar100
+  val_rate: 0.1
+  labeled_per_class: 4000
+model:
+  test: True
+train:
+  batch_size: 32
+  use_mixmatch: True
+  lr: 0.002
+  num_epoch: 50
+  logdir: logs-mixmatch
+augmentations:
+  use: True
+  use_crop: True
+  pad_size: 4
+  use_flip: True
+  flip_prob: 0.5
+  use_noise: True
+  noise_rate: 0.15

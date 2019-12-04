@@ -5,6 +5,7 @@ import torch
 from logger import *
 from dataset import *
 from train_baseline import train_baseline
+from train_mixmatch import train_mixmatch
 from augmentations import Augmentor
 
 
@@ -53,5 +54,7 @@ if __name__ == '__main__':
     augmentor = None
     if config.augmentations.use:
         augmentor = Augmentor(config)
-    if not config.train.use_mixmatch:
+    if config.train.use_mixmatch:
+        train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, augmentor, config)
+    else:
         train_baseline(train_labeled_loader, val_loader, augmentor, config.train.lr, config.train.num_epoch)
