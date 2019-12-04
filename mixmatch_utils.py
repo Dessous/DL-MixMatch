@@ -40,17 +40,9 @@ class MixMatchMetric(object):
 class MixMatchLoss(object):
     def __init__(self, lambda_u=75):
         self.lambda_u = lambda_u
-        self.cross_entr = torch.nn.CrossEntropyLoss()
         self.mse = torch.nn.MSELoss()
         
-  #  def __call__(self, output_lab, target_lab, output_u, target_u):
-   #     prob_u = torch.softmax(output_u, dim=1)
-    #    Lx = -torch.mean(torch.sum(F.log_softmax(output_lab, dim=1) * target_lab, dim=1))
-     #   return Lx + self.lambda_u * self.mse(prob_u, target_u)
     def __call__(self, outputs_x, targets_x, outputs_u, targets_u):
         probs_u = torch.softmax(outputs_u, dim=1)
-
-        Lx = -torch.mean(torch.sum(F.log_softmax(outputs_x, dim=1) * targets_x, dim=1))
-        Lu = torch.mean((probs_u - targets_u)**2)
-
-        return Lx + self.lambda_u * Lu
+        loss_lab = -torch.mean(torch.sum(F.log_softmax(outputs_x, dim=1) * targets_x, dim=1))
+        return loss_lab + self.lambda_u * self.mse(probs_u, targets_u)

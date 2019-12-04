@@ -56,5 +56,5 @@ class Augmentor:
                 cur_img = self.flip(cur_img)
             if self.config.augmentations.use_noise:
                 cur_img = self.noise(cur_img)
-                out.append(cur_img)
+            out.append(cur_img)
         return torch.cat(out)

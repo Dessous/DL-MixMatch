@@ -21,5 +21,4 @@ augmentations:
   pad_size: 4
   use_flip: True
   flip_prob: 0.5
-  use_noise: True
-  noise_rate: 0.15
+  use_noise: False

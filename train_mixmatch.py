@@ -22,10 +22,10 @@ def train(train_labeled_loader, train_unlabeled_loader, model,
     }
     
     mix_match_loss = MixMatchMetric()
-    mix_match_acc = MixMatchMetric()
 
     for i in range(num_iter):
         labeled, target = next(dataloaders['labeled'])
+        labeled = augmentor(labeled)
         unlabeled1 = next(dataloaders['unlabeled'])
         unlabeled2 = augmentor(unlabeled1)
         unlabeled1 = augmentor(unlabeled1)
@@ -87,21 +87,20 @@ def train(train_labeled_loader, train_unlabeled_loader, model,
         
     return mix_match_loss.value()
 
-def test(loader, model, criterion, writer=None):
-    losses = MixMatchMetric()
-    accuracy = MixMatchMetric()
+def test(loader, model, criterion):
+    test_loss = 0.0
+    test_acc = 0.0
+    n = len(loader)
 
     model.eval()
     with torch.no_grad():
         for batch in loader:
             batch_size = batch[0].size(0)
             pred = model(batch[0].cuda())
-            loss = criterion(pred, batch[1].cuda())
-            acc = (torch.argmax(pred, dim=1) == batch[1].cuda()).float().sum() / batch_size
-            losses.update(loss.item(), batch_size)
-            accuracy.update(acc, batch_size)
+            test_loss += criterion(pred, batch[1].cuda())
+            test_acc += (torch.argmax(pred, dim=1) == batch[1].cuda()).float().sum() / batch_size
 
-    return losses.value(), accuracy.value()
+    return test_loss / n, test_acc / n
 
 def train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, augmentor, config):
     assert (augmentor is not None)
