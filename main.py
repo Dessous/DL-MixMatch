@@ -43,6 +43,7 @@ if __name__ == '__main__':
 
     with open('experiments/' + args.experiment + '.yaml') as config_file:
         config = AttrDict.from_nested_dict(yaml.safe_load(config_file))
+        logger.add_row(config_file.read())
 
     # fixing the seed
     np.random.seed(config.random.seed)
@@ -55,6 +56,6 @@ if __name__ == '__main__':
     if config.augmentations.use:
         augmentor = Augmentor(config)
     if config.train.use_mixmatch:
-        train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, augmentor, config)
+        train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, augmentor, config, logger.writer)
     else:
         train_baseline(train_labeled_loader, test_loader, augmentor, config.train.lr, config.train.num_epoch)

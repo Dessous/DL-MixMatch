@@ -49,10 +49,10 @@ def test(loader, model, criterion):
 
     return test_loss / n, test_acc / n
 
-def train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, augmentor, config):
+
+def train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, augmentor, config, writer):
     assert (augmentor is not None)
 
-    writer = SummaryWriter(config.train.logdir)
     model = WideResNet28(10)
     model = model.cuda()
     criterion = nn.CrossEntropyLoss()
