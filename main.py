@@ -50,12 +50,12 @@ if __name__ == '__main__':
     torch.manual_seed(config.random.seed)
     torch.backends.cudnn.deterministic = True
 
-    train_labeled_loader, train_unlabeled_loader, val_loader, test_loader = \
+    train_labeled_loader, train_unlabeled_loader, test_loader = \
         get_loaders(config, logger)
     augmentor = None
     if config.augmentations.use:
         augmentor = Augmentor(config)
     if config.train.use_mixmatch:
-        train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, augmentor, config, logger.writer)
+        train_mixmatch(train_labeled_loader, train_unlabeled_loader, test_loader, logger, augmentor, config)
     else:
-        train_baseline(train_labeled_loader, test_loader, augmentor, config.train.lr, config.train.num_epoch)
+        train_baseline(train_labeled_loader, test_loader, logger, augmentor, config.train.lr, config.train.num_epoch)

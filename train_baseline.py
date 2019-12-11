@@ -22,7 +22,7 @@ def test(loader, model, criterion):
     return test_loss / n, test_acc / n
 
 
-def train_baseline(train_loader, val_loader, augmentor=None, lr=0.002, num_epoch=20, num_iter=1024):
+def train_baseline(train_loader, val_loader, logger, augmentor=None, lr=0.002, num_epoch=20, num_iter=1024):
     model = WideResNet28(10)
     model = model.cuda()
 
@@ -30,7 +30,7 @@ def train_baseline(train_loader, val_loader, augmentor=None, lr=0.002, num_epoch
     criterion.cuda()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-    writer = SummaryWriter('logs-baseline')
+    writer = logger.writer
     train_loader_cycle = cycle(train_loader)
 
     for k in range(num_epoch):
