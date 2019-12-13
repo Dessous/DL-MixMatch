@@ -6,12 +6,12 @@ import math
 class WideBlock(nn.Module):
     def __init__(self, in_size, out_size, relu, dropout=0.0, stride=1):
         super(WideBlock, self).__init__()
-        self.batch_norm1 = nn.BatchNorm2d(in_size)
+        self.batch_norm1 = nn.BatchNorm2d(in_size, momentum=0.001)
         self.relu = nn.LeakyReLU(relu, inplace=True)
         self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3,
                                padding=1, bias=True)
         self.dropout = nn.Dropout(dropout)
-        self.batch_norm2 = nn.BatchNorm2d(out_size)
+        self.batch_norm2 = nn.BatchNorm2d(out_size, momentum=0.001)
         self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3,
                                stride=stride, padding=1, bias=True)
 
@@ -53,7 +53,7 @@ class WideResNet28(nn.Module):
         self.block3 = self.create_wide_block(32*widen_factor, 64*widen_factor, blocks_count,
                                 relu, dropout, 2)
         
-        self.batch_norm = nn.BatchNorm2d(64*widen_factor)
+        self.batch_norm = nn.BatchNorm2d(64*widen_factor, momentum=0.001)
         self.relu = nn.LeakyReLU(relu, inplace=True)
         self.linear = nn.Linear(64*widen_factor, n_classes)
         weigths_init(self.modules())

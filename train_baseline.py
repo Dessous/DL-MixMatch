@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from tensorboardX import SummaryWriter
 from wideresnet import WideResNet28
 from itertools import cycle
+from ema import EMAOptim
 
 
 def test(loader, model, criterion):
@@ -25,6 +26,11 @@ def test(loader, model, criterion):
 def train_baseline(train_loader, val_loader, logger, augmentor=None, lr=0.002, num_epoch=20, num_iter=1024):
     model = WideResNet28(10)
     model = model.cuda()
+    model_ema = WideResNet28(10)
+    model_ema = model_ema.cuda()
+    for param in model_ema.parameters():
+        param.detach_()
+    ema_optimizer = EMAOptim(model, model_ema)
 
     criterion = nn.CrossEntropyLoss()
     criterion.cuda()
@@ -48,6 +54,7 @@ def train_baseline(train_loader, val_loader, logger, augmentor=None, lr=0.002, n
             loss = criterion(pred, batch[1].cuda())
             loss.backward()
             optimizer.step()
+            ema_optimizer.step()
             writer.add_scalar('loss-train', loss.item(), i + k * num_iter)
             writer.add_scalar('Accuracy-train',
                               (torch.argmax(pred, dim=1) == batch[1].cuda()).float().sum() / 32,
