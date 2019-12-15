@@ -4,7 +4,7 @@ import numpy as np
 import torch.nn.functional as F
 
 
-class MixMatch:
+class MixMatchLoss:
     def __init__(self, config, model):
         self.T = config.mixmatch.sharp_temperature
         self.K = config.mixmatch.n_aug
@@ -12,7 +12,7 @@ class MixMatch:
         self.augmentor = Augmentor(config)
         self.n_classes = 10 if config.dataset.name == 'cifar10' else 100
         self.model = model
-        self.loss = MixMatchLoss(config.mixmatch.lmbd_u, config.mixmatch.lmbd_rampup_length)
+        self.loss = _CombinedLoss(config.mixmatch.lmbd_u, config.mixmatch.lmbd_rampup_length)
 
     def guess_labels(self, unlabeled_batches):
         batch_size = unlabeled_batches[0].size(0)
@@ -49,9 +49,9 @@ class MixMatch:
         mixup_x = lmbd * all_x + (1 - lmbd) * shuffled_x
         mixup_y = lmbd * all_y + (1 - lmbd) * shuffled_y
 
-        mixup_x = interleave(list(torch.split(mixup_x, batch_size)), batch_size)
+        mixup_x = _interleave(list(torch.split(mixup_x, batch_size)), batch_size)
         logits = [self.model(x) for x in mixup_x]
-        logits = interleave(logits, batch_size)
+        logits = _interleave(logits, batch_size)
         logits_labeled = logits[0]
         logits_unlabeled = torch.cat(logits[1:])
         y_labeled = mixup_y[:batch_size]
@@ -59,7 +59,7 @@ class MixMatch:
         return self.loss(logits_labeled, logits_unlabeled, y_labeled, y_unlabeled, epoch)
 
 
-class MixMatchLoss:
+class _CombinedLoss:
     def __init__(self, lmbd, rampup_length):
         self.lmbd = lmbd
         self.rampup_length = rampup_length
@@ -68,10 +68,34 @@ class MixMatchLoss:
         unlabeled_prob = torch.softmax(logits_unlabeled, dim=1)
         l_x = -torch.mean(torch.sum(F.log_softmax(logits_labeled, dim=1) * y_labeled, dim=1))
         l_u = torch.mean((unlabeled_prob - y_unlabeled) ** 2)
-        return l_x + l_u * self.lmbd * rampup(epoch, self.rampup_length)
+        return l_x + l_u * self.lmbd * _rampup(epoch, self.rampup_length)
+
+class MixUpLoss:
+    def __init__(self, config, model):
+        self.alpha = config.mixup.alpha
+        self.xent = torch.nn.CrossEntropyLoss()
+        self.model = model
+
+    def _augment(self, x, y):
+        if self.alpha == 1:
+            lmbd = 1
+        else:
+            lmbd = np.random.beta(self.alpha, self.alpha)
+
+        idx = torch.randperm(x.size(0)).cuda()
+        mixup_x = lmbd * x + (1 - lmbd) * x[idx]
+        y_a = y
+        y_b = y[idx]
+        return mixup_x, y_a, y_b, lmbd
+
+    def __call__(self, x, y):
+        mixup_x, y_a, y_b, lmbd = self._augment(x, y)
+        pred = self.model(mixup_x)
+        loss = lmbd * self.xent(pred, y_a) + (1 - lmbd) * self.xent(pred, y_b)
+        return loss
 
 
-def interleave_offsets(batch_size, n_groups):
+def _interleave_offsets(batch_size, n_groups):
     groups = [batch_size // n_groups] * n_groups
     for x in range(batch_size - sum(groups)):
         groups[-x - 1] += 1
@@ -82,8 +106,8 @@ def interleave_offsets(batch_size, n_groups):
     return offsets
 
 
-def interleave(batches, batch_size):
-    offsets = interleave_offsets(batch_size, len(batches))
+def _interleave(batches, batch_size):
+    offsets = _interleave_offsets(batch_size, len(batches))
     out = [[batch[offsets[i]:offsets[i+1]] for i in range(len(batches))] for batch in batches]
     for i in range(1, len(batches)):
         out[0][i], out[i][i] = out[i][i], out[0][i]
@@ -91,7 +115,7 @@ def interleave(batches, batch_size):
     return out
 
 
-def rampup(current, rampup_length):
+def _rampup(current, rampup_length):
     if rampup_length == 0:
         return 1.0
     else:

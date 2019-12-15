@@ -10,6 +10,8 @@ train:
   use_mixmatch: False
   lr: 0.0002
   num_epoch: 50
+mixup:
+  alpha: 0.5
 augmentations:
   use: False
   use_crop: True
