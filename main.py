@@ -42,6 +42,7 @@ if __name__ == '__main__':
 
     with open('experiments/' + args.experiment + '.yaml') as config_file:
         config = AttrDict.from_nested_dict(yaml.safe_load(config_file))
+    with open('experiments/' + args.experiment + '.yaml') as config_file:
         logger.add_row(config_file.read())
 
     # fixing the seed

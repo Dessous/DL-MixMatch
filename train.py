@@ -51,8 +51,8 @@ def train_epoch(train_labeled_loader, train_unlabeled_loader, model, model_ema,
         pred = model(labeled.cuda())
         loss = criterion(pred, target.cuda())
         acc = (torch.argmax(pred, dim=1) == target.cuda()).float().sum() / labeled.size(0)
-        writer.add_scalar('train_acc', acc, i + epoch * num_iter)
-        writer.add_scalar('train_loss', loss.item(), i + epoch * num_iter)
+        writer.add_scalar('train/loss', loss.item(), i + epoch * num_iter)
+        writer.add_scalar('train/acc', acc, i + epoch * num_iter)
         
         optimizer.zero_grad()
         mix_loss.backward()
@@ -81,6 +81,6 @@ def train(train_labeled_loader, train_unlabeled_loader, test_loader, logger, aug
         train_epoch(train_labeled_loader, train_unlabeled_loader, model, model_ema,
               optimizer, ema_optimizer, criterion, epoch, writer, config)
         
-        test_loss, test_acc = test(test_loader, model, criterion)
-        writer.add_scalar('test_loss', test_loss, epoch)
-        writer.add_scalar('test_acc', test_acc, epoch)
+        test_loss, test_acc = test(test_loader, model_ema, criterion)
+        writer.add_scalar('test/loss', test_loss, epoch)
+        writer.add_scalar('test/acc', test_acc, epoch)
