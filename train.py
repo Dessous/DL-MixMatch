@@ -24,7 +24,7 @@ def test(loader, model, criterion):
     return test_loss / n, test_acc / n
 
 
-def train_epoch(train_labeled_loader, train_unlabeled_loader, model, model_ema,
+def train_epoch(train_labeled_loader, train_unlabeled_loader, model, augmentor, model_ema,
           optimizer, ema_optimizer, criterion, epoch, writer, config):
     
     model.train(True)
@@ -40,7 +40,7 @@ def train_epoch(train_labeled_loader, train_unlabeled_loader, model, model_ema,
     num_iter = config.train.num_iter
     for i in range(num_iter):
         labeled, target = next(labeled_cycle)
-        
+        labeled = augmentor(labeled)
         mix_loss = None
         if config.train.use_mixmatch:
             unlabeled = next(unlabeled_cycle)
@@ -78,7 +78,7 @@ def train(train_labeled_loader, train_unlabeled_loader, test_loader, logger, aug
 
     for epoch in range(config.train.num_epoch):
         print('EPOCH {}'.format(epoch))
-        train_epoch(train_labeled_loader, train_unlabeled_loader, model, model_ema,
+        train_epoch(train_labeled_loader, train_unlabeled_loader, model, augmentor, model_ema,
               optimizer, ema_optimizer, criterion, epoch, writer, config)
         
         test_loss, test_acc = test(test_loader, model_ema, criterion)

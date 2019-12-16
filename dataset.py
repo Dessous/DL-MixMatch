@@ -78,12 +78,14 @@ def get_loaders(config, logger):
     labeled_train_loader = DataLoader(
         train_labeled,
         batch_size=config.train.batch_size,
-        shuffle=True
+        shuffle=True,
+        drop_last=True
     )
     unlabeled_train_loader = DataLoader(
         train_unlabeled,
         batch_size=config.train.batch_size,
-        shuffle=True
+        shuffle=True,
+        drop_last=True
     ) if train_unlabeled else None
     test_loader = DataLoader(
         test,
