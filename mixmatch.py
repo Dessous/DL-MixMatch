@@ -13,6 +13,7 @@ class MixMatchLoss:
         self.n_classes = 10 if config.dataset.name == 'cifar10' else 100
         self.model = model
         self.loss = _CombinedLoss(config.mixmatch.lmbd_u, config.mixmatch.lmbd_rampup_length)
+        print('Use MixMatchLoss')
 
     def guess_labels(self, unlabeled_batches):
         batch_size = unlabeled_batches[0].size(0)
@@ -75,6 +76,7 @@ class MixUpLoss:
         self.alpha = config.mixup.alpha
         self.xent = torch.nn.CrossEntropyLoss()
         self.model = model
+        print('Use MixUpLoss')
 
     def _augment(self, x, y):
         if self.alpha == 1:
