@@ -61,14 +61,13 @@ def train_epoch(train_labeled_loader, train_unlabeled_loader, model, augmentor,
             ema_optimizer.step()
 
 
-
 def train(train_labeled_loader, train_unlabeled_loader, test_loader, logger, augmentor, config):
     writer = logger.writer
 
     model = WideResNet28(config.dataset.num_classes)
     model = model.cuda()
     ema_optimizer = None
-    if ema_optimizer:
+    if config.train.use_ema:
         model_ema = WideResNet28(config.dataset.num_classes)
         model_ema = model_ema.cuda()
         for param in model_ema.parameters():
