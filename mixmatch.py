@@ -26,7 +26,8 @@ class MixMatchLoss:
                 guessed_y += torch.softmax(output, dim=1)
             guessed_y /= len(unlabeled_batches)
             guessed_y = guessed_y**(1 / self.T)
-        return guessed_y
+            guessed_y = guessed_y / guessed_y.sum(dim=1, keepdim=True)
+        return guessed_y.detach()
 
     def __call__(self, x_l, y, x_u, epoch):
         batch_size = x_l.size(0)
