@@ -72,7 +72,7 @@ def train(train_labeled_loader, train_unlabeled_loader, test_loader, logger, aug
     model_ema = model_ema.cuda()
     for param in model_ema.parameters():
         param.detach_()
-    ema_optimizer = EMAOptim(model, model_ema, self.train.wd, config.train.lr)
+    ema_optimizer = EMAOptim(model, model_ema, config.train.wd, config.train.lr)
 
     criterion = nn.CrossEntropyLoss()
     criterion.cuda()
