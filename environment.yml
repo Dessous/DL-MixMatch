@@ -29,8 +29,10 @@ dependencies:
 - tqdm
 - pytorch==1.2
 - pyyaml
+- tensorflow
 - pip:
   - torchvision==0.4.1
   - pandas_summary==0.0.5
   - ipywidgets
   - nbconvert
+  - tensorboardx
