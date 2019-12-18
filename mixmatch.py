@@ -5,13 +5,14 @@ import torch.nn.functional as F
 
 
 class MixMatchLoss:
-    def __init__(self, config, model):
+    def __init__(self, config, model, model_ema):
         self.T = config.mixmatch.sharp_temperature
         self.K = config.mixmatch.n_aug
         self.mixup_alpha = config.mixmatch.mixup_alpha
         self.augmentor = Augmentor(config)
         self.n_classes = 10 if config.dataset.name == 'cifar10' else 100
         self.model = model
+        self.model_ema = model_ema
         self.loss = _CombinedLoss(config.mixmatch.lmbd_u, config.mixmatch.lmbd_rampup_length)
         print('Use MixMatchLoss')
 
@@ -22,7 +23,10 @@ class MixMatchLoss:
             if unlabeled_batches[0].is_cuda:
                 guessed_y = guessed_y.cuda()
             for batch in unlabeled_batches:
-                output = self.model(batch)
+                if self.model_ema is None:
+                    output = self.model(batch)
+                else:
+                    output = self.model_ema(batch)  
                 guessed_y += torch.softmax(output, dim=1)
             guessed_y /= len(unlabeled_batches)
             guessed_y = guessed_y**(1 / self.T)

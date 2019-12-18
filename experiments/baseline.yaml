@@ -8,9 +8,10 @@ train:
   batch_size: 64 
   use_mixmatch: False
   lr: 0.002
+  wd: 0.0004
   num_epoch: 100
   num_iter: 1024
-  use_ema: True
+  use_ema: False
 mixup:
   alpha: 0.5
 augmentations:

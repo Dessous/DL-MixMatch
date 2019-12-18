@@ -24,7 +24,7 @@ def test(loader, model, criterion):
     return test_loss / n, test_acc / n
 
 
-def train_epoch(train_labeled_loader, train_unlabeled_loader, model, augmentor,
+def train_epoch(train_labeled_loader, train_unlabeled_loader, model, ema_model, augmentor,
           optimizer, ema_optimizer, criterion, epoch, writer, config):
     
     model.train(True)
@@ -33,7 +33,10 @@ def train_epoch(train_labeled_loader, train_unlabeled_loader, model, augmentor,
     unlabeled_cycle = None
     if config.train.use_mixmatch:
         unlabeled_cycle = cycle(train_unlabeled_loader)
-        mixmatch = MixMatchLoss(config, model)
+        if config.train.use_ema:
+            mixmatch = MixMatchLoss(config, ema_model)
+        else:
+            mixmatch = MixMatchLoss(config, model)
     else:
         mixup = MixUpLoss(config, model)
 
@@ -57,8 +60,7 @@ def train_epoch(train_labeled_loader, train_unlabeled_loader, model, augmentor,
         optimizer.zero_grad()
         mix_loss.backward()
         optimizer.step()
-        if config.train.use_ema:
-            ema_optimizer.step()
+        ema_optimizer.step()
 
 
 def train(train_labeled_loader, train_unlabeled_loader, test_loader, logger, augmentor, config):
@@ -66,13 +68,11 @@ def train(train_labeled_loader, train_unlabeled_loader, test_loader, logger, aug
 
     model = WideResNet28(config.dataset.num_classes)
     model = model.cuda()
-    ema_optimizer = None
-    if config.train.use_ema:
-        model_ema = WideResNet28(config.dataset.num_classes)
-        model_ema = model_ema.cuda()
-        for param in model_ema.parameters():
-            param.detach_()
-        ema_optimizer = EMAOptim(model, model_ema)
+    model_ema = WideResNet28(config.dataset.num_classes)
+    model_ema = model_ema.cuda()
+    for param in model_ema.parameters():
+        param.detach_()
+    ema_optimizer = EMAOptim(model, model_ema, self.train.wd)
 
     criterion = nn.CrossEntropyLoss()
     criterion.cuda()
@@ -80,12 +80,9 @@ def train(train_labeled_loader, train_unlabeled_loader, test_loader, logger, aug
 
     for epoch in range(config.train.num_epoch):
         print('EPOCH {}'.format(epoch))
-        train_epoch(train_labeled_loader, train_unlabeled_loader, model, augmentor,
+        train_epoch(train_labeled_loader, train_unlabeled_loader, model, model_ema, augmentor,
               optimizer, ema_optimizer, criterion, epoch, writer, config)
         
-        if config.train.use_ema:
-            test_loss, test_acc = test(test_loader, model_ema, criterion)
-        else:
-            test_loss, test_acc = test(test_loader, model, criterion)
+        test_loss, test_acc = test(test_loader, model_ema, criterion)
         writer.add_scalar('test/loss', test_loss, epoch)
         writer.add_scalar('test/acc', test_acc, epoch)
