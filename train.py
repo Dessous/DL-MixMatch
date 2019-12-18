@@ -34,9 +34,9 @@ def train_epoch(train_labeled_loader, train_unlabeled_loader, model, ema_model, 
     if config.train.use_mixmatch:
         unlabeled_cycle = cycle(train_unlabeled_loader)
         if config.train.use_ema:
-            mixmatch = MixMatchLoss(config, ema_model)
+            mixmatch = MixMatchLoss(config, model, ema_model)
         else:
-            mixmatch = MixMatchLoss(config, model)
+            mixmatch = MixMatchLoss(config, model, None)
     else:
         mixup = MixUpLoss(config, model)
 
@@ -72,7 +72,7 @@ def train(train_labeled_loader, train_unlabeled_loader, test_loader, logger, aug
     model_ema = model_ema.cuda()
     for param in model_ema.parameters():
         param.detach_()
-    ema_optimizer = EMAOptim(model, model_ema, self.train.wd)
+    ema_optimizer = EMAOptim(model, model_ema, self.train.wd, config.train.lr)
 
     criterion = nn.CrossEntropyLoss()
     criterion.cuda()
