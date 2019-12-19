@@ -47,6 +47,10 @@ class MixMatchLoss:
                 [torch.arange(labeled_size),
                  torch.randperm(unlabeled_size) + labeled_size]
             )
+        elif self.mixup_mode == 'off':
+            return torch.arange(labeled_size + unlabeled_size)
+        else:
+            assert 0, "wrong mixup_mode argument"
 
     def __call__(self, x_l, y, x_u, epoch):
         batch_size = x_l.size(0)
@@ -61,7 +65,7 @@ class MixMatchLoss:
 
         all_x = torch.cat([labeled] + unlabeled, dim=0)
         all_y = torch.cat([ohe_y_labeled] + [y_unlabeled] * self.K, dim=0)
-        perm = self.mixup_permutation(len(labeled), len(unlabeled))
+        perm = self.mixup_permutation(len(labeled), len(labeled) * self.K)
         shuffled_x = all_x[perm]
         shuffled_y = all_y[perm]
 
