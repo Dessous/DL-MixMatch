@@ -39,23 +39,23 @@ def weigths_init(modules):
             m.bias.data.zero_()
 
 class WideResNet28(nn.Module):
-    def __init__(self, n_classes, widen_factor=1, relu=0.01, dropout=0.0):
+    def __init__(self, n_classes, filters=16, widen_factor=1, relu=0.01, dropout=0.0):
         super(WideResNet28, self).__init__()
         DEPTH = 28
         blocks_count = (DEPTH - 4) // 6
         
-        self.conv = nn.Conv2d(3, 16, kernel_size=3,
+        self.conv = nn.Conv2d(3, filters, kernel_size=3,
                                stride=1, padding=1, bias=True)
-        self.block1 = self.create_wide_block(16, 16*widen_factor, blocks_count,
+        self.block1 = self.create_wide_block(filters, filters*widen_factor, blocks_count,
                                 relu, dropout, 1)
-        self.block2 = self.create_wide_block(16*widen_factor, 32*widen_factor, blocks_count,
+        self.block2 = self.create_wide_block(filters*widen_factor, 2*filters*widen_factor, blocks_count,
                                 relu, dropout, 2)
-        self.block3 = self.create_wide_block(32*widen_factor, 64*widen_factor, blocks_count,
+        self.block3 = self.create_wide_block(2*filters*widen_factor, 4*filters*widen_factor, blocks_count,
                                 relu, dropout, 2)
         
-        self.batch_norm = nn.BatchNorm2d(64*widen_factor, momentum=0.001)
+        self.batch_norm = nn.BatchNorm2d(4*filters*widen_factor, momentum=0.001)
         self.relu = nn.LeakyReLU(relu, inplace=True)
-        self.linear = nn.Linear(64*widen_factor, n_classes)
+        self.linear = nn.Linear(4*filters*widen_factor, n_classes)
         weigths_init(self.modules())
         
     def create_wide_block(self, in_size, out_size, blocks_count, relu, dropout, stride):
