@@ -40,7 +40,7 @@ class MixMatchLoss:
         elif self.mixup_mode == 'labeled':
             return torch.cat(
                 [torch.randperm(labeled_size),
-                 torch.arange(labeled_size, unlabeled_size)]
+                 torch.arange(labeled_size, labeled_size + unlabeled_size)]
             )
         elif self.mixup_mode == 'unlabeled':
             return torch.cat(
