@@ -11,7 +11,7 @@ train:
   wd: 0.00004
   num_epoch: 100
   num_iter: 1024
-  use_ema: False
+  use_ema: True
 mixup:
   alpha: 0.5
 augmentations:

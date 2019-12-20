@@ -21,8 +21,8 @@ augmentations:
   use_noise: False
 mixmatch:
   sharp_temperature: 0.5
-  n_aug: 1
+  n_aug: 2
   mixup_alpha: 0.75
-  lmbd_u: 100
-  lmbd_rampup_length: 2
-  mixup_mode: full
+  lmbd_u: 75 
+  lmbd_rampup_length: 16
+  mixup_mode: off

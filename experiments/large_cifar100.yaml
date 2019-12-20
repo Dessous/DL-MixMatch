@@ -1,17 +1,18 @@
 random:
   seed: 42
 dataset:
-  name: cifar10    # cifar10 or cifar100
-  num_classes: 10
-  labeled_per_class: 2000
+  name: cifar100    # cifar10 or cifar100
+  num_classes: 100
+  labeled_per_class: 100
 train:
-  batch_size: 64
+  batch_size: 32
   use_mixmatch: True
   lr: 0.002
-  wd: 0.0004
-  num_epoch: 200 
+  wd: 0.00008
+  num_epoch: 200
   num_iter: 1024
   use_ema: False
+  filters: 135
 augmentations:
   use: True
   use_crop: True
@@ -23,5 +24,5 @@ mixmatch:
   sharp_temperature: 0.5
   n_aug: 2
   mixup_alpha: 0.75
-  lmbd_u: 75
+  lmbd_u: 150
   lmbd_rampup_length: 16
