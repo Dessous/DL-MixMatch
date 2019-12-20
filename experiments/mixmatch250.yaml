@@ -3,12 +3,12 @@ random:
 dataset:
   name: cifar10    # cifar10 or cifar100
   num_classes: 10
-  labeled_per_class: 250
+  labeled_per_class: 25
 train:
   batch_size: 64
   use_mixmatch: True
   lr: 0.002
-  wd: 0.0004
+  wd: 0.00004
   num_epoch: 100
   num_iter: 1024
   use_ema: False
