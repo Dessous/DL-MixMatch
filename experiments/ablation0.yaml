@@ -25,4 +25,4 @@ mixmatch:
   mixup_alpha: 0.75
   lmbd_u: 100
   lmbd_rampup_length: 2
-  mixup_mode: off
+  mixup_mode: full
