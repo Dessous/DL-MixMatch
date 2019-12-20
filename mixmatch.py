@@ -8,6 +8,7 @@ class MixMatchLoss:
     def __init__(self, config, model, model_ema):
         self.T = config.mixmatch.sharp_temperature
         self.K = config.mixmatch.n_aug
+        self.mixup_mode = config.mixmatch.mixup_mode
         self.mixup_alpha = config.mixmatch.mixup_alpha
         self.augmentor = Augmentor(config)
         self.n_classes = 10 if config.dataset.name == 'cifar10' else 100
@@ -33,6 +34,24 @@ class MixMatchLoss:
             guessed_y = guessed_y / guessed_y.sum(dim=1, keepdim=True)
         return guessed_y.detach()
 
+    def mixup_permutation(self, labeled_size, unlabeled_size):
+        if self.mixup_mode == 'full':
+            return torch.randperm(labeled_size + unlabeled_size)
+        elif self.mixup_mode == 'labeled':
+            return torch.cat(
+                [torch.randperm(labeled_size),
+                 torch.arange(labeled_size, labeled_size + unlabeled_size)]
+            )
+        elif self.mixup_mode == 'unlabeled':
+            return torch.cat(
+                [torch.arange(labeled_size),
+                 torch.randperm(unlabeled_size) + labeled_size]
+            )
+        elif self.mixup_mode == 'off':
+            return torch.arange(labeled_size + unlabeled_size)
+        else:
+            assert 0, "wrong mixup_mode argument"
+
     def __call__(self, x_l, y, x_u, epoch):
         batch_size = x_l.size(0)
         labeled = self.augmentor(x_l)
@@ -46,7 +65,7 @@ class MixMatchLoss:
 
         all_x = torch.cat([labeled] + unlabeled, dim=0)
         all_y = torch.cat([ohe_y_labeled] + [y_unlabeled] * self.K, dim=0)
-        perm = torch.randperm(all_x.size(0))
+        perm = self.mixup_permutation(len(labeled), len(labeled) * self.K)
         shuffled_x = all_x[perm]
         shuffled_y = all_y[perm]
 
